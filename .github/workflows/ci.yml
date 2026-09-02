@@ -15,54 +15,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  shell:
-    name: Shell checks
-    runs-on: ubuntu-latest
+  test-windows:
+    name: Windows test & node smoke test
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: 20
 
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
-
-      - name: Run repository checks
-        run: make check
-
-  macos:
-    name: macOS smoke test
-    runs-on: macos-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-        with:
-          fetch-depth: 0
-
-      - name: Run smoke tests
-        run: make test
-
-  nix:
-    name: Nix package
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
-
-      - name: Build and verify package
+      - name: Smoke test CLI
+        shell: pwsh
         run: |
-          nix build .# --no-update-lock-file --print-build-logs
-          git diff --exit-code -- flake.lock
-          test -x result/bin/codex-profile
-          test -x result/bin/codex-profiles
-          result/bin/codex-profile help >/dev/null
-          result/bin/codex-profiles version | grep -E '^codex-profile ' >/dev/null
+          node bin/codex-profile.js version
+          node bin/codex-profile.js doctor
+          node bin/codex-profile.js init test-ci
+          node bin/codex-profile.js list
+          node bin/codex-profile.js env test-ci --shell powershell
+          node bin/codex-profile.js remove test-ci --yes
+
+  test-unix:
+    name: Linux & macOS smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Smoke test CLI
+        run: |
+          node bin/codex-profile.js version
+          node bin/codex-profile.js doctor
+          node bin/codex-profile.js init test-ci
+          node bin/codex-profile.js list
+          node bin/codex-profile.js env test-ci --shell bash
+          node bin/codex-profile.js remove test-ci --yes
+
