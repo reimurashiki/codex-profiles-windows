@@ -1,83 +1,65 @@
-# codex-profiles
+# codex-profiles-windows
 
-Named Codex homes and ChatGPT windows with separate local state, without
-copying tokens.
+Named Codex homes and ChatGPT windows with separate local state for **Windows** (and cross-platform), without copying tokens.
 
-[![CI](https://github.com/Ducksss/codex-profiles/actions/workflows/ci.yml/badge.svg)](https://github.com/Ducksss/codex-profiles/actions/workflows/ci.yml)
-[![Latest release](https://img.shields.io/github/v/release/Ducksss/codex-profiles?sort=semver)](https://github.com/Ducksss/codex-profiles/releases)
-[![npm](https://img.shields.io/npm/v/codex-profile.svg)](https://www.npmjs.com/package/codex-profile)
+> **Note & Credits**: Project ini dibuat khusus untuk mendukung **Windows** (PowerShell/CMD/WSL) dan terinspirasi dari [Ducksss/codex-profiles](https://github.com/Ducksss/codex-profiles).
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Shell: Bash](https://img.shields.io/badge/shell-bash-4EAA25.svg)](bin/codex-profile)
-[![Platform: macOS + Linux](https://img.shields.io/badge/platform-macOS%20%2B%20Linux-lightgrey.svg)](#platform-support)
+[![Platform: Windows + macOS + Linux](https://img.shields.io/badge/platform-Windows%20%2B%20macOS%20%2B%20Linux-lightgrey.svg)](#platform-support)
 
-[Project page](https://ducksss.github.io/codex-profiles/) |
-[llms.txt](https://ducksss.github.io/codex-profiles/llms.txt) |
-[Practical guides](#practical-guides) |
-[Agent guide](AGENTS.md) |
-[Security model](SECURITY.md)
-
-`codex-profiles` is a dependency-free Bash wrapper for people who use Codex
-with personal, work, school, client, or test accounts. Each name selects a
-separate `CODEX_HOME`. On macOS, a named Desktop launch also selects separate
-Electron user data for the whole launched ChatGPT window.
+`codex-profile-windows` adalah wrapper cross-platform dan native Windows untuk orang-orang yang menggunakan Codex CLI / ChatGPT Desktop dengan akun personal, work, sekolah, client, atau test account. Setiap nama profil memilih `CODEX_HOME` terpisah (`%USERPROFILE%\.codex-<name>`).
 
 ```sh
 codex-profile cli personal                     # Codex CLI on personal
 codex-profile cli work exec "review this repo" # one-shot Codex CLI on work
-codex-profile app default ~/Dev/app             # stock ChatGPT session
-codex-profile app work ~/Dev/client             # named work ChatGPT window
+codex-profile app default C:\Dev\app           # stock ChatGPT session
+codex-profile app work C:\Dev\client           # named work ChatGPT window
 ```
 
-The project keeps its existing name and commands. Version 0.7 adapts the
-implementation to OpenAI's integrated ChatGPT desktop app; it does not rebrand
-the CLI or copy, parse, print, or migrate `auth.json`.
+## Install di Windows
 
-## Understand the two scopes first
-
-[OpenAI's July 9 release notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes)
-describe the integrated desktop app as bringing Chat, Work, and Codex together.
-The commands in this project therefore have two intentionally different scopes:
-
-| Command family | What the selected name controls |
-| --- | --- |
-| `cli`, `login`, `env`, `use` | Codex-local state under the selected `CODEX_HOME`. These commands do not switch an open ChatGPT window. |
-| `app default` | The normal installed ChatGPT app, its stock Desktop session, and `~/.codex`. |
-| `app <name>` | A named ChatGPT window with its own local Electron user data across Chat, Work, and Codex, plus `~/.codex-<name>` for Codex-local state. |
-| `status` | Codex-local login status. It does not identify the account shown in a ChatGPT window. |
-| `doctor` | Installation and local-state diagnostics. It cannot prove that CLI and Desktop are signed into the same account. |
-
-`work` in `codex-profile app work` is a user-chosen profile name. It is not the
-ChatGPT product mode named **Work**. Once a named window is open, switching its
-mode between Chat, Work, and Codex stays inside that window's Desktop session.
-
-Account equality is deliberately **unverified**. The tool does not inspect
-tokens, account identifiers, cookies, or private application data. If you want
-the CLI and Desktop window to use the same account, authenticate both in that
-profile and verify the visible account yourself.
-
-Local-state separation is not an account, OS, or server-side boundary.
-
-## Install
-
-With npm:
-
-```sh
-npm install -g codex-profile
+### Via PowerShell (Standalone Installer)
+Jalankan di PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/reimurashiki/codex-profiles-windows/main/install.ps1 | iex
 ```
 
-The npm package is singular. It installs both `codex-profile` and
-`codex-profiles`; the plural npm package belongs to another project.
-
-With Homebrew:
-
+### Via NPM
 ```sh
-brew install Ducksss/tap/codex-profile
+npm install -g codex-profile-windows
 ```
 
-With the standalone installer:
-
+Verifikasi instalasi:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Ducksss/codex-profiles/main/install.sh | sh
+codex-profile doctor
+```
+
+## Quick Start (PowerShell / CMD)
+
+Buat dua profil Codex dan autentikasi:
+```powershell
+codex-profile init personal
+codex-profile init work
+codex-profile login personal
+codex-profile login work
+```
+
+Menjalankan Codex CLI dengan profil tertentu:
+```powershell
+codex-profile cli personal
+codex-profile cli work exec "run tests"
+```
+
+Buka ChatGPT Desktop dengan sesi terpisah:
+```powershell
+codex-profile app work C:\Projects\MyProject
+```
+
+Integrasi Shell (Switching Profile):
+```powershell
+codex-profile shell-init powershell | Out-String | Invoke-Expression
+codex-profile use work
+```
 ```
 
 With Nix:

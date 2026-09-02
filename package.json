@@ -1,15 +1,15 @@
 {
-  "name": "codex-profile",
+  "name": "codex-profile-windows",
   "version": "0.9.1",
-  "description": "Named Codex CLI profiles with separate local ChatGPT desktop state.",
+  "description": "Named Codex CLI profiles with separate local ChatGPT desktop state for Windows & Cross-Platform.",
   "license": "MIT",
-  "homepage": "https://ducksss.github.io/codex-profiles/",
+  "homepage": "https://github.com/reimurashiki/codex-profiles-windows",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ducksss/codex-profiles.git"
+    "url": "git+https://github.com/reimurashiki/codex-profiles-windows.git"
   },
   "bugs": {
-    "url": "https://github.com/Ducksss/codex-profiles/issues"
+    "url": "https://github.com/reimurashiki/codex-profiles-windows/issues"
   },
   "keywords": [
     "ai-tools",
@@ -25,28 +25,30 @@
     "openai",
     "openai-codex",
     "productivity",
+    "windows",
     "vibe-coding"
   ],
   "bin": {
-    "codex-profile": "bin/codex-profile",
-    "codex-profiles": "bin/codex-profile"
+    "codex-profile": "bin/codex-profile.js",
+    "codex-profiles": "bin/codex-profile.js"
   },
   "files": [
-    "bin/codex-profile",
+    "bin",
     "CHANGELOG.md",
     "docs",
+    "install.ps1",
+    "install.sh",
     "LICENSE",
     "README.md",
     "SECURITY.md"
   ],
   "os": [
+    "win32",
     "darwin",
     "linux"
   ],
   "scripts": {
-    "check": "make check",
-    "pack:check": "npm pack --dry-run --silent",
-    "test": "make test"
+    "pack:check": "npm pack --dry-run --silent"
   },
   "publishConfig": {
     "access": "public"
