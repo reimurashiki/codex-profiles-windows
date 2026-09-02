@@ -2,12 +2,12 @@
 
 Named Codex homes and ChatGPT windows with separate local state for **Windows** (and cross-platform), without copying tokens.
 
-> **Note & Credits**: Project ini dibuat khusus untuk mendukung **Windows** (PowerShell/CMD/WSL) dan terinspirasi dari [Ducksss/codex-profiles](https://github.com/Ducksss/codex-profiles).
+> **Note & Credits**: This project is built specifically to bring native **Windows** (PowerShell/CMD/WSL) support and is inspired by [Ducksss/codex-profiles](https://github.com/Ducksss/codex-profiles).
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform: Windows + macOS + Linux](https://img.shields.io/badge/platform-Windows%20%2B%20macOS%20%2B%20Linux-lightgrey.svg)](#platform-support)
 
-`codex-profile-windows` adalah wrapper cross-platform dan native Windows untuk orang-orang yang menggunakan Codex CLI / ChatGPT Desktop dengan akun personal, work, sekolah, client, atau test account. Setiap nama profil memilih `CODEX_HOME` terpisah (`%USERPROFILE%\.codex-<name>`).
+`codex-profile-windows` is a cross-platform and Windows-native wrapper for people who use Codex CLI / ChatGPT Desktop with personal, work, school, client, or test accounts. Each profile name selects a separate `CODEX_HOME` (`%USERPROFILE%\.codex-<name>`). On Windows & macOS, a named Desktop launch also selects separate local user data for the whole launched ChatGPT window.
 
 ```sh
 codex-profile cli personal                     # Codex CLI on personal
@@ -16,10 +16,10 @@ codex-profile app default C:\Dev\app           # stock ChatGPT session
 codex-profile app work C:\Dev\client           # named work ChatGPT window
 ```
 
-## Install di Windows
+## Installation on Windows
 
 ### Via PowerShell (Standalone Installer)
-Jalankan di PowerShell:
+Run in PowerShell:
 ```powershell
 irm https://raw.githubusercontent.com/reimurashiki/codex-profiles-windows/main/install.ps1 | iex
 ```
@@ -29,14 +29,14 @@ irm https://raw.githubusercontent.com/reimurashiki/codex-profiles-windows/main/i
 npm install -g codex-profile-windows
 ```
 
-Verifikasi instalasi:
+Verify the installation:
 ```sh
 codex-profile doctor
 ```
 
-## Quick Start (PowerShell / CMD)
+## Quick Start (PowerShell / CMD / Bash)
 
-Buat dua profil Codex dan autentikasi:
+Create two Codex homes and authenticate:
 ```powershell
 codex-profile init personal
 codex-profile init work
@@ -44,79 +44,36 @@ codex-profile login personal
 codex-profile login work
 ```
 
-Menjalankan Codex CLI dengan profil tertentu:
+To keep authentication separate while sharing selected configuration (symlinked/junctioned):
 ```powershell
-codex-profile cli personal
-codex-profile cli work exec "run tests"
-```
-
-Buka ChatGPT Desktop dengan sesi terpisah:
-```powershell
-codex-profile app work C:\Projects\MyProject
-```
-
-Integrasi Shell (Switching Profile):
-```powershell
-codex-profile shell-init powershell | Out-String | Invoke-Expression
-codex-profile use work
-```
-```
-
-With Nix:
-
-```sh
-nix run github:Ducksss/codex-profiles
-nix profile install github:Ducksss/codex-profiles
-```
-
-From source:
-
-```sh
-git clone https://github.com/Ducksss/codex-profiles.git
-cd codex-profiles
-make install
-```
-
-Then verify the installation:
-
-```sh
-codex-profile doctor
-```
-
-## Quick start
-
-Create two Codex homes and authenticate their CLI sessions:
-
-```sh
-codex-profile init personal
-codex-profile init work
-codex-profile login personal
-codex-profile login work
-```
-
-To keep authentication and runtime state separate while sharing selected
-configuration, initialize a new linked profile from an existing one:
-
-```sh
 codex-profile init personal-2 --share-with personal
 codex-profile login personal-2
 ```
 
-Run the upstream Codex CLI with either home:
-
-```sh
+Run upstream Codex CLI with a specific profile:
+```powershell
 codex-profile cli personal
 codex-profile cli work exec "run tests and summarize failures"
 ```
 
-Optionally bind a project once, then let the current directory select its
-profile for both CLI and Desktop launches:
+Open ChatGPT Desktop with isolated local state:
+```powershell
+codex-profile app work C:\Projects\MyProject
+```
 
-```sh
-codex-profile workspace bind ~/Dev/work-project work
-cd ~/Dev/work-project
-codex-profile run exec "run tests and summarize failures"
+Workspace binding (bind project folders to profiles):
+```powershell
+codex-profile workspace bind C:\Projects\MyProject work
+cd C:\Projects\MyProject
+codex-profile run exec "run tests"
 codex-profile run --app
+```
+
+Shell Integration (Switching Profile in Current Shell):
+```powershell
+# In PowerShell:
+codex-profile shell-init powershell | Out-String | Invoke-Expression
+codex-profile use work
 ```
 
 On macOS, open the stock ChatGPT session or a named window with separate local
