@@ -18,15 +18,22 @@ codex-profile app work C:\Dev\client           # named work ChatGPT window
 
 ## Installation on Windows
 
-### Via PowerShell (Standalone Installer)
+### 1. Via PowerShell (Standalone Installer)
 Run in PowerShell:
 ```powershell
 irm https://raw.githubusercontent.com/reimurashiki/codex-profiles-windows/main/install.ps1 | iex
 ```
 
-### Via NPM
+### 2. Via NPM (Direct from GitHub)
 ```sh
-npm install -g codex-profile-windows
+npm install -g https://github.com/reimurashiki/codex-profiles-windows.git
+```
+
+### 3. From Source
+```sh
+git clone https://github.com/reimurashiki/codex-profiles-windows.git
+cd codex-profiles-windows
+npm link
 ```
 
 Verify the installation:
