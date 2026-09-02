@@ -323,6 +323,7 @@ function cmdUsage() {
 
 Usage:
   ${PROGRAM} app <profile> [--instance] [--rebuild] [workspace]
+  ${PROGRAM} stop [profile|--all]
   ${PROGRAM} cli <profile> [codex-args...]
   ${PROGRAM} login <profile> [codex-login-args...]
   ${PROGRAM} init <profile> [--share-with <source-profile>]
@@ -797,6 +798,148 @@ function cmdCloneConfig(sourceProfile, targetProfile, force) {
   }
 }
 
+function getRunningDesktopProfiles() {
+  const running = [];
+  const profiles = discoverProfiles(true);
+
+  if (IS_WIN) {
+    try {
+      const psCmd = 'Get-CimInstance Win32_Process -Filter "Name LIKE \'%ChatGPT%\' OR Name LIKE \'%Codex%\'" | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress';
+      const res = spawnSync('powershell.exe', ['-NoProfile', '-Command', psCmd], { encoding: 'utf8' });
+      const raw = (res.stdout || '').trim();
+      if (raw) {
+        const parsed = JSON.parse(raw.startsWith('[') ? raw : `[${raw}]`);
+        for (const p of profiles) {
+          const home = codexHomeForProfile(p);
+          const userData = path.join(home, 'electron-user-data');
+          const pids = [];
+          for (const proc of parsed) {
+            const cmd = proc.CommandLine || '';
+            if (p === 'default') {
+              if (cmd.includes('ChatGPT.exe') && !cmd.includes('--user-data-dir')) {
+                pids.push(proc.ProcessId);
+              }
+            } else {
+              if (cmd.includes(userData) || cmd.includes(`.codex-${p}`)) {
+                pids.push(proc.ProcessId);
+              }
+            }
+          }
+          if (pids.length > 0) {
+            running.push({ profile: p, pids });
+          }
+        }
+      }
+    } catch (e) {}
+  } else {
+    // macOS / Linux
+    for (const p of profiles) {
+      const home = codexHomeForProfile(p);
+      const userData = path.join(home, 'electron-user-data');
+      try {
+        const pids = [];
+        const res = spawnSync('pgrep', ['-f', p === 'default' ? 'ChatGPT' : userData], { encoding: 'utf8' });
+        if (res.stdout) {
+          const list = res.stdout.trim().split('\n').map(x => parseInt(x, 10)).filter(Boolean);
+          if (list.length > 0) {
+            running.push({ profile: p, pids: list });
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  return running;
+}
+
+function stopPids(pids) {
+  if (!pids || pids.length === 0) return;
+  if (IS_WIN) {
+    for (const pid of pids) {
+      spawnSync('taskkill', ['/F', '/PID', String(pid), '/T'], { stdio: 'ignore' });
+    }
+  } else {
+    for (const pid of pids) {
+      try {
+        process.kill(pid, 'SIGTERM');
+      } catch (e) {}
+    }
+  }
+}
+
+function stopAllDesktop() {
+  if (IS_WIN) {
+    spawnSync('taskkill', ['/F', '/IM', 'ChatGPT.exe'], { stdio: 'ignore' });
+    spawnSync('taskkill', ['/F', '/IM', 'Codex.exe'], { stdio: 'ignore' });
+    spawnSync('taskkill', ['/F', '/IM', 'codex.exe'], { stdio: 'ignore' });
+  } else {
+    spawnSync('pkill', ['-f', 'ChatGPT'], { stdio: 'ignore' });
+    spawnSync('pkill', ['-f', 'Codex'], { stdio: 'ignore' });
+  }
+}
+
+async function cmdStopInteractive(targetProfile) {
+  const readline = require('readline');
+
+  if (targetProfile) {
+    if (targetProfile === '--all' || targetProfile === '-a' || targetProfile === 'all') {
+      stopAllDesktop();
+      note('Stopped all running ChatGPT and Codex processes.');
+      return;
+    }
+
+    validateProfile(targetProfile);
+    const active = getRunningDesktopProfiles();
+    const found = active.find(a => a.profile === targetProfile);
+    if (found) {
+      stopPids(found.pids);
+      note(`Stopped desktop instance for profile '${targetProfile}'.`);
+    } else {
+      note(`No active desktop instance found for profile '${targetProfile}'.`);
+    }
+    return;
+  }
+
+  const active = getRunningDesktopProfiles();
+  if (active.length === 0) {
+    note('No active ChatGPT or Codex instances found.');
+    return;
+  }
+
+  console.log('\nActive profile instances:');
+  active.forEach((item, idx) => {
+    console.log(` [${idx + 1}] ${item.profile} (${item.pids.length} processes)`);
+  });
+  console.log(` [${active.length + 1}] Stop All`);
+  console.log(` [0] Cancel\n`);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question(`Select profile to stop (0-${active.length + 1}): `, (ans) => {
+    rl.close();
+    const choice = parseInt(ans.trim(), 10);
+    if (isNaN(choice) || choice === 0) {
+      note('Cancelled.');
+      return;
+    }
+    if (choice === active.length + 1) {
+      stopAllDesktop();
+      note('Stopped all running ChatGPT and Codex processes.');
+      return;
+    }
+    if (choice >= 1 && choice <= active.length) {
+      const selected = active[choice - 1];
+      stopPids(selected.pids);
+      note(`Stopped desktop instance for profile '${selected.profile}'.`);
+    } else {
+      note('Invalid selection.');
+    }
+  });
+}
+
 function cmdShellInit(shell) {
   shell = (shell || (IS_WIN ? 'powershell' : 'bash')).toLowerCase();
   if (shell === 'powershell' || shell === 'pwsh') {
@@ -943,19 +1086,10 @@ Then: ${PROGRAM} use <profile>`);
       }
       break;
     }
-    case 'quit':
+  case 'quit':
   case 'kill':
   case 'stop': {
-    if (IS_WIN) {
-      spawnSync('taskkill', ['/F', '/IM', 'ChatGPT.exe'], { stdio: 'ignore' });
-      spawnSync('taskkill', ['/F', '/IM', 'Codex.exe'], { stdio: 'ignore' });
-      spawnSync('taskkill', ['/F', '/IM', 'codex.exe'], { stdio: 'ignore' });
-      note('Stopped all running ChatGPT and Codex processes.');
-    } else {
-      spawnSync('pkill', ['-f', 'ChatGPT'], { stdio: 'ignore' });
-      spawnSync('pkill', ['-f', 'Codex'], { stdio: 'ignore' });
-      note('Stopped all running ChatGPT and Codex processes.');
-    }
+    cmdStopInteractive(args[0]);
     break;
   }
   case 'doctor': {
