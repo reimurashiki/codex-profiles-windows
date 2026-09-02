@@ -943,7 +943,22 @@ Then: ${PROGRAM} use <profile>`);
       }
       break;
     }
-    case 'doctor': {
+    case 'quit':
+  case 'kill':
+  case 'stop': {
+    if (IS_WIN) {
+      spawnSync('taskkill', ['/F', '/IM', 'ChatGPT.exe'], { stdio: 'ignore' });
+      spawnSync('taskkill', ['/F', '/IM', 'Codex.exe'], { stdio: 'ignore' });
+      spawnSync('taskkill', ['/F', '/IM', 'codex.exe'], { stdio: 'ignore' });
+      note('Stopped all running ChatGPT and Codex processes.');
+    } else {
+      spawnSync('pkill', ['-f', 'ChatGPT'], { stdio: 'ignore' });
+      spawnSync('pkill', ['-f', 'Codex'], { stdio: 'ignore' });
+      note('Stopped all running ChatGPT and Codex processes.');
+    }
+    break;
+  }
+  case 'doctor': {
       const isJson = args.includes('--json') || args.includes('-j');
       cmdDoctor(isJson);
       break;
