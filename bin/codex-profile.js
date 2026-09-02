@@ -439,8 +439,10 @@ function cmdLogin(profile, loginArgs) {
 function cmdApp(profile, workspace) {
   if (!profile) die(`Usage: ${PROGRAM} app <profile> [--instance] [--rebuild] [workspace]`);
   validateProfile(profile);
-  workspace = workspace ? path.resolve(workspace) : process.cwd();
-  workspaceGuardProfile(profile, workspace);
+  if (workspace) {
+    workspace = path.resolve(workspace);
+    workspaceGuardProfile(profile, workspace);
+  }
 
   if (process.env.CODEX_ACCESS_TOKEN) {
     die('Refusing Desktop launch while CODEX_ACCESS_TOKEN is set; unset it so the selected ChatGPT window controls authentication.');
